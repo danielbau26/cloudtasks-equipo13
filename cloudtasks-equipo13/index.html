@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Registro de tareas</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+<main>
+
+    <header>
+        <h1>Registro de tareas</h1>
+    </header>
+
+    <section>
+        <h2>Crear nueva tarea</h2>
+
+        <form id="task-form">
+
+            <label for="title">Título</label>
+
+            <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Ingresa el título de la tarea"
+            >
+
+            <label for="description">Descripción</label>
+
+            <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Describe la tarea"
+            ></textarea>
+
+            <label for="priority">Prioridad</label>
+
+            <select id="priority" name="priority">
+
+                <option value="">
+                    Selecciona una prioridad
+                </option>
+
+                <option value="baja">
+                    Baja
+                </option>
+
+                <option value="media">
+                    Media
+                </option>
+
+                <option value="alta">
+                    Alta
+                </option>
+
+            </select>
+
+            <label for="deadline">Fecha límite</label>
+
+            <input
+                    type="date"
+                    id="deadline"
+                    name="deadline"
+            >
+
+            <button type="submit">
+                Registrar tarea
+            </button>
+
+        </form>
+
+    </section>
+
+    <section>
+
+        <h2>Tareas registradas</h2>
+
+        <div id="task-list">
+
+        </div>
+
+    </section>
+
+</main>
+
+<script src="js/app.js"></script>
+
+</body>
+
+</html>
