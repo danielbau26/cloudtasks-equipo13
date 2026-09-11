@@ -102,11 +102,204 @@ button:hover {
     background-color: #1d4ed8;
 }
 
+/* Botón crear nueva tarea (azul con + en círculo) */
+.new-task-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.new-task-button .plus {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.16);
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Detalles / menús desplegables */
+details summary {
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.list-controls {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0 14px;
+}
+
+.sort-button {
+    padding: 8px 12px;
+    background-color: #e2e8f0;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.sort-button:hover {
+    background-color: #cbd5e1;
+}
+
+#pending-list,
+#completed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Controles: colocar botones a los lados */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.right-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* Botones tipo menú (blanco con texto azul) */
+.menu-button {
+    padding: 8px 12px;
+    background-color: #ffffff;
+    color: #2563eb;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.menu-button:hover {
+    background-color: #f8fafc;
+}
+
+/* Estado activo: borde azul */
+.menu-button.active {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.06);
+}
+
+/* Secciones de tareas */
+.task-section {
+    margin-top: 8px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Punto de prioridad */
+.priority-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.priority-baja.priority-dot { background-color: #22c55e; }
+.priority-media.priority-dot { background-color: #f59e0b; }
+.priority-alta.priority-dot { background-color: #ef4444; }
+
+.task-card .deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clock-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+
 /* Lista de tareas */
 #task-list {
     display: flex;
     flex-direction: column;
     gap: 15px;
+}
+
+.task-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.complete-button,
+.delete-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.complete-button:hover,
+.delete-button:hover {
+    transform: translateY(-1px);
+    opacity: 0.96;
+}
+
+.complete-button {
+    background-color: #16a34a;
+}
+
+.complete-button:hover {
+    background-color: #15803d;
+}
+
+.delete-button {
+    background-color: #dc2626;
+}
+
+.delete-button:hover {
+    background-color: #b91c1c;
+}
+
+.action-icon {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
 }
 
 /* Este estilo se utilizará posteriormente desde JavaScript */
@@ -142,7 +335,52 @@ button:hover {
 /* Tarea completada */
 .completed {
     opacity: 0.65;
-    text-decoration: line-through;
+}
+
+.progress-summary {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #e0f2fe, #dbeafe);
+    color: #0f172a;
+    font-weight: bold;
+}
+
+.progress-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 14px;
+    background-color: rgba(148, 163, 184, 0.28);
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 50%, #f59e0b 75%, #ef4444 100%);
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.progress-summary.low .progress-bar-fill {
+    background: linear-gradient(90deg, #facc15 0%, #f59e0b 100%);
+}
+
+.progress-summary.medium .progress-bar-fill {
+    background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+}
+
+.progress-summary.high .progress-bar-fill {
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
 }
 
 /* Pantallas pequeñas */
