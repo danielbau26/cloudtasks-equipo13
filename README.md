@@ -37,14 +37,18 @@ Se configuró Cloudflare para administrar el dominio, DNS y HTTPS de la aplicaci
 ## Estructura del proyecto
 cloudtasks-equipo13/
 
+```text
+cloudtasks-equipo13/
+├── index.html
 ├── css/
 │   └── styles.css
 ├── js/
-│   ├── app.js
-│   └── supabaseClient.js
-├── .gitignore
-├── index.html
-└── README.md
+│   ├── supabaseClient.js
+│   └── app.js
+├── README.md
+└── .gitignore
+
+```
 
 ## Integrantes
 
