@@ -12,9 +12,24 @@ body {
 
 /* Contenedor principal */
 main {
-    width: 90%;
-    max-width: 900px;
+    width: min(96%, 1500px);
     margin: 40px auto;
+}
+
+.app-shell {
+    display: flex;
+    align-items: flex-start;
+    gap: 26px;
+}
+
+.sidebar-panel {
+    width: 330px;
+    flex-shrink: 0;
+}
+
+.content-panel {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Encabezado */
@@ -172,11 +187,13 @@ details summary {
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .right-controls {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* Botones tipo menú (blanco con texto azul) */
@@ -249,6 +266,7 @@ details summary {
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 16px;
+    justify-content: flex-end;
 }
 
 .complete-button,
@@ -309,14 +327,25 @@ details summary {
     border-left: 6px solid #2563eb;
     border-radius: 8px;
     background-color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
 }
 
 .task-card h3 {
-    margin: 0 0 10px;
+    margin: 0;
+    flex: 1;
 }
 
 .task-card p {
-    margin: 6px 0;
+    margin: 0;
 }
 
 /* Prioridades */
@@ -383,6 +412,85 @@ details summary {
     background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
 }
 
+@media (min-width: 901px) {
+    .app-shell {
+        display: flex;
+        align-items: flex-start;
+        gap: 30px;
+    }
+
+    .sidebar-panel {
+        width: 360px;
+        flex-shrink: 0;
+    }
+
+    .content-panel {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .task-card {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 230px;
+        align-items: start;
+        column-gap: 18px;
+        row-gap: 10px;
+    }
+
+    .task-card-header {
+        grid-column: 1 / 2;
+    }
+
+    .task-card > p,
+    .task-card > .task-actions {
+        grid-column: 1 / 2;
+    }
+
+    .task-card .task-actions {
+        grid-column: 2 / 3;
+        grid-row: 1 / span 6;
+        justify-content: flex-end;
+        align-self: center;
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 900px) {
+    .app-shell {
+        display: block;
+    }
+
+    .sidebar-panel,
+    .content-panel {
+        width: 100%;
+    }
+
+    .right-controls {
+        width: 100%;
+    }
+
+    .menu-button {
+        flex: 1 1 160px;
+    }
+
+    .task-card {
+        display: flex;
+    }
+
+    .task-card-header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .task-card .task-actions {
+        justify-content: flex-start;
+    }
+}
+
 /* Pantallas pequeñas */
 @media (max-width: 600px) {
     main {
@@ -397,5 +505,43 @@ details summary {
 
     header h1 {
         font-size: 26px;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .left-controls,
+    .right-controls {
+        width: auto;
+        flex: 1;
+    }
+
+    .new-task-button {
+        width: auto;
+        min-width: 0;
+        flex: 1;
+        justify-content: center;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .right-controls {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 6px;
+    }
+
+    .menu-button {
+        width: auto;
+        flex: 1;
+        justify-content: center;
+        padding: 10px 8px;
+        font-size: 12px;
     }
 }
