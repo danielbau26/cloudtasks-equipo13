@@ -25,71 +25,78 @@
     </header>
 
     <section>
-        <h2>Crear nueva tarea</h2>
 
-        <form id="task-form">
+        <!-- Barra de controles: crear tarea a la izquierda, menús a la derecha -->
+        <div class="controls">
+            <div class="left-controls">
+                <button id="toggle-new-task" class="new-task-button" aria-expanded="false">
+                    <span class="plus">+</span>
+                    Crear nueva tarea
+                </button>
+            </div>
 
-            <label for="title">Título</label>
+            <div class="right-controls">
+                <button id="pending-btn" class="menu-button" aria-expanded="true">Tareas registradas</button>
+                <button id="completed-btn" class="menu-button">Tareas realizadas</button>
+                <button id="all-btn" class="menu-button">Todas</button>
+            </div>
+        </div>
 
-            <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    placeholder="Ingresa el título de la tarea"
-            >
+        <div id="new-task-container" class="hidden">
+            <form id="task-form">
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" placeholder="Ingresa el título de la tarea">
 
-            <label for="description">Descripción</label>
+                <label for="description">Descripción</label>
+                <textarea id="description" name="description" placeholder="Describe la tarea"></textarea>
 
-            <textarea
-                    id="description"
-                    name="description"
-                    placeholder="Describe la tarea"
-            ></textarea>
+                <label for="priority">Prioridad</label>
+                <select id="priority" name="priority">
+                    <option value="">Selecciona una prioridad</option>
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                </select>
 
-            <label for="priority">Prioridad</label>
+                <label for="deadline">Fecha límite</label>
+                <input type="date" id="deadline" name="deadline">
 
-            <select id="priority" name="priority">
-
-                <option value="">
-                    Selecciona una prioridad
-                </option>
-
-                <option value="baja">
-                    Baja
-                </option>
-
-                <option value="media">
-                    Media
-                </option>
-
-                <option value="alta">
-                    Alta
-                </option>
-
-            </select>
-
-            <label for="deadline">Fecha límite</label>
-
-            <input
-                    type="date"
-                    id="deadline"
-                    name="deadline"
-            >
-
-            <button type="submit">
-                Registrar tarea
-            </button>
-
-        </form>
+                <button type="submit">Registrar tarea</button>
+            </form>
+        </div>
 
     </section>
 
     <section>
 
-        <h2>Tareas registradas</h2>
+        <div id="all-progress" class="progress-summary hidden">
+            <div class="progress-label-row">
+                <span>Tareas realizadas</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            </div>
+        </div>
 
-        <div id="task-list">
+        <div class="sections">
+            <div id="pending-section" class="task-section">
+                <div class="section-header">
+                    <h3>Tareas registradas (<span id="pending-count">0</span>)</h3>
+                    <div class="list-controls">
+                        <button id="sort-priority" class="sort-button">Ordenar por prioridad</button>
+                        <button id="sort-deadline" class="sort-button">Ordenar por fecha límite</button>
+                    </div>
+                </div>
+                <div id="pending-list"></div>
+            </div>
 
+            <div id="completed-section" class="task-section hidden">
+                <div class="section-header">
+                    <h3>Tareas realizadas (<span id="completed-count">0</span>)</h3>
+                </div>
+                <div id="completed-list"></div>
+            </div>
         </div>
 
     </section>
