@@ -102,6 +102,141 @@ button:hover {
     background-color: #1d4ed8;
 }
 
+/* Botón crear nueva tarea (azul con + en círculo) */
+.new-task-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 999px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.new-task-button .plus {
+    display: inline-flex;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.16);
+    border-radius: 50%;
+    font-size: 18px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Detalles / menús desplegables */
+details summary {
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.list-controls {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0 14px;
+}
+
+.sort-button {
+    padding: 8px 12px;
+    background-color: #e2e8f0;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.sort-button:hover {
+    background-color: #cbd5e1;
+}
+
+#pending-list,
+#completed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Controles: colocar botones a los lados */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.right-controls {
+    display: flex;
+    gap: 8px;
+}
+
+/* Botones tipo menú (blanco con texto azul) */
+.menu-button {
+    padding: 8px 12px;
+    background-color: #ffffff;
+    color: #2563eb;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.menu-button:hover {
+    background-color: #f8fafc;
+}
+
+/* Estado activo: borde azul */
+.menu-button.active {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.06);
+}
+
+/* Secciones de tareas */
+.task-section {
+    margin-top: 8px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Punto de prioridad */
+.priority-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.priority-baja.priority-dot { background-color: #22c55e; }
+.priority-media.priority-dot { background-color: #f59e0b; }
+.priority-alta.priority-dot { background-color: #ef4444; }
+
+.task-card .deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.clock-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+
 /* Lista de tareas */
 #task-list {
     display: flex;
