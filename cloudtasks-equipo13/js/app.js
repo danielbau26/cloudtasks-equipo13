@@ -16,6 +16,9 @@ const allBtn = document.getElementById("all-btn");
 
 const pendingSection = document.getElementById("pending-section");
 const completedSection = document.getElementById("completed-section");
+const allProgress = document.getElementById("all-progress");
+const progressPercent = document.getElementById("progress-percent");
+const progressBarFill = document.getElementById("progress-bar-fill");
 
 const titleInput = document.getElementById("title");
 const descriptionInput = document.getElementById("description");
@@ -56,6 +59,7 @@ if (sortDeadlineBtn) {
 function showPendingOnly() {
     if (pendingSection) pendingSection.classList.remove('hidden');
     if (completedSection) completedSection.classList.add('hidden');
+    if (allProgress) allProgress.classList.add('hidden');
     pendingBtn.classList.add('active');
     completedBtn.classList.remove('active');
     if (allBtn) allBtn.classList.remove('active');
@@ -64,6 +68,7 @@ function showPendingOnly() {
 function showCompletedOnly() {
     if (pendingSection) pendingSection.classList.add('hidden');
     if (completedSection) completedSection.classList.remove('hidden');
+    if (allProgress) allProgress.classList.add('hidden');
     pendingBtn.classList.remove('active');
     completedBtn.classList.add('active');
     if (allBtn) allBtn.classList.remove('active');
@@ -72,9 +77,11 @@ function showCompletedOnly() {
 function showAll() {
     if (pendingSection) pendingSection.classList.remove('hidden');
     if (completedSection) completedSection.classList.remove('hidden');
+    if (allProgress) allProgress.classList.remove('hidden');
     pendingBtn.classList.remove('active');
     completedBtn.classList.remove('active');
     if (allBtn) allBtn.classList.add('active');
+    updateProgressSummary(tasksCache);
 }
 
 if (pendingBtn) pendingBtn.addEventListener('click', showPendingOnly);
@@ -145,6 +152,30 @@ taskForm.addEventListener("submit", async function (event) {
     }
 });
 
+function updateProgressSummary(tasks) {
+    if (!allProgress || !progressPercent || !progressBarFill) return;
+
+    const total = (tasks || []).length;
+    const completed = (tasks || []).filter(task => task.completed).length;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    progressPercent.textContent = `${percentage}%`;
+    progressBarFill.style.width = `${percentage}%`;
+
+    allProgress.classList.remove('low', 'medium', 'high');
+    if (percentage < 50) {
+        allProgress.classList.add('low');
+    } else if (percentage < 80) {
+        allProgress.classList.add('medium');
+    } else {
+        allProgress.classList.add('high');
+    }
+
+    const totalText = total === 0 ? '0 tareas' : `${completed}/${total} completadas`;
+    allProgress.setAttribute('title', `${totalText} · ${percentage}% completado`);
+    allProgress.classList.toggle('hidden', !allBtn || !allBtn.classList.contains('active'));
+}
+
 // Renderizar tareas en el DOM
 function renderTasks(tasks) {
     // Separar pendientes y completadas
@@ -168,6 +199,7 @@ function renderTasks(tasks) {
 
     pendingCount.textContent = pending.length;
     completedCount.textContent = completed.length;
+    updateProgressSummary(tasks);
 
     if (pending.length === 0) {
         const p = document.createElement('p');
@@ -222,14 +254,14 @@ function renderTasks(tasks) {
 
         const completeButton = document.createElement("button");
         completeButton.classList.add("complete-button");
-        completeButton.textContent = task.completed ? "Marcar como pendiente" : "Completar";
+        completeButton.innerHTML = `${getCheckIcon()}<span>${task.completed ? "Marcar como pendiente" : "Completar"}</span>`;
         completeButton.addEventListener("click", function () {
             toggleTaskStatus(task.id, task.completed);
         });
 
         const deleteButton = document.createElement("button");
         deleteButton.classList.add("delete-button");
-        deleteButton.textContent = "Eliminar";
+        deleteButton.innerHTML = `${getTrashIcon()}<span>Eliminar</span>`;
         deleteButton.addEventListener("click", function () {
             deleteTask(task.id);
         });
@@ -259,6 +291,31 @@ function getClockSVG() {
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
         </svg>`;
+}
+
+function getCheckIcon() {
+    return `
+        <span class="action-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11.5l2.2 2.2L15 7.5"></path>
+                <rect x="3.5" y="3.5" width="17" height="17" rx="3"></rect>
+            </svg>
+        </span>
+    `;
+}
+
+function getTrashIcon() {
+    return `
+        <span class="action-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M8 6V4h8v2"></path>
+                <path d="M18 6l-1 14H7L6 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+            </svg>
+        </span>
+    `;
 }
 
 // Actualizar estado de tarea en Supabase
