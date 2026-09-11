@@ -220,8 +220,12 @@ function renderTasks(tasks) {
         taskCard.classList.add("task-card", `priority-${task.priority}`);
         if (task.completed) taskCard.classList.add("completed");
 
+        const taskHeader = document.createElement("div");
+        taskHeader.classList.add("task-card-header");
+
         const taskTitle = document.createElement("h3");
         taskTitle.textContent = task.title;
+        taskHeader.appendChild(taskTitle);
 
         const taskDescription = document.createElement("p");
         const dot = document.createElement('span');
@@ -269,7 +273,7 @@ function renderTasks(tasks) {
         buttonContainer.appendChild(completeButton);
         buttonContainer.appendChild(deleteButton);
 
-        taskCard.appendChild(taskTitle);
+        taskCard.appendChild(taskHeader);
         taskCard.appendChild(taskDescription);
         taskCard.appendChild(taskPriority);
         taskCard.appendChild(taskDeadline);

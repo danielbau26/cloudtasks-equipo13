@@ -14,92 +14,93 @@
 
 <main>
 
-    <p id="connection-error" class="connection-error" hidden>
-        No se pudo conectar con la base de datos. Verifica la URL y la clave (anon key) en
-        <code>js/supabaseClient.js</code>, y que las políticas RLS de la tabla <code>tasks</code> permitan
-        acceso al rol <code>anon</code>.
-    </p>
+    <div class="app-shell">
+        <aside class="sidebar-panel">
+            <p id="connection-error" class="connection-error" hidden>
+                No se pudo conectar con la base de datos. Verifica la URL y la clave (anon key) en
+                <code>js/supabaseClient.js</code>, y que las políticas RLS de la tabla <code>tasks</code> permitan
+                acceso al rol <code>anon</code>.
+            </p>
 
-    <header>
-        <h1>Registro de tareas</h1>
-    </header>
+            <header>
+                <h1>Registro de tareas</h1>
+            </header>
 
-    <section>
+            <section>
+                <div class="controls">
+                    <div class="left-controls">
+                        <button id="toggle-new-task" class="new-task-button" aria-expanded="false">
+                            <span class="plus">+</span>
+                            Crear nueva tarea
+                        </button>
+                    </div>
 
-        <!-- Barra de controles: crear tarea a la izquierda, menús a la derecha -->
-        <div class="controls">
-            <div class="left-controls">
-                <button id="toggle-new-task" class="new-task-button" aria-expanded="false">
-                    <span class="plus">+</span>
-                    Crear nueva tarea
-                </button>
-            </div>
-
-            <div class="right-controls">
-                <button id="pending-btn" class="menu-button" aria-expanded="true">Tareas registradas</button>
-                <button id="completed-btn" class="menu-button">Tareas realizadas</button>
-                <button id="all-btn" class="menu-button">Todas</button>
-            </div>
-        </div>
-
-        <div id="new-task-container" class="hidden">
-            <form id="task-form">
-                <label for="title">Título</label>
-                <input type="text" id="title" name="title" placeholder="Ingresa el título de la tarea">
-
-                <label for="description">Descripción</label>
-                <textarea id="description" name="description" placeholder="Describe la tarea"></textarea>
-
-                <label for="priority">Prioridad</label>
-                <select id="priority" name="priority">
-                    <option value="">Selecciona una prioridad</option>
-                    <option value="baja">Baja</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                </select>
-
-                <label for="deadline">Fecha límite</label>
-                <input type="date" id="deadline" name="deadline">
-
-                <button type="submit">Registrar tarea</button>
-            </form>
-        </div>
-
-    </section>
-
-    <section>
-
-        <div id="all-progress" class="progress-summary hidden">
-            <div class="progress-label-row">
-                <span>Tareas realizadas</span>
-                <span id="progress-percent">0%</span>
-            </div>
-            <div class="progress-bar-track">
-                <div id="progress-bar-fill" class="progress-bar-fill"></div>
-            </div>
-        </div>
-
-        <div class="sections">
-            <div id="pending-section" class="task-section">
-                <div class="section-header">
-                    <h3>Tareas registradas (<span id="pending-count">0</span>)</h3>
-                    <div class="list-controls">
-                        <button id="sort-priority" class="sort-button">Ordenar por prioridad</button>
-                        <button id="sort-deadline" class="sort-button">Ordenar por fecha límite</button>
+                    <div class="right-controls">
+                        <button id="pending-btn" class="menu-button" aria-expanded="true">Tareas registradas</button>
+                        <button id="completed-btn" class="menu-button">Tareas realizadas</button>
+                        <button id="all-btn" class="menu-button">Todas</button>
                     </div>
                 </div>
-                <div id="pending-list"></div>
-            </div>
 
-            <div id="completed-section" class="task-section hidden">
-                <div class="section-header">
-                    <h3>Tareas realizadas (<span id="completed-count">0</span>)</h3>
+                <div id="new-task-container" class="hidden">
+                    <form id="task-form">
+                        <label for="title">Título</label>
+                        <input type="text" id="title" name="title" placeholder="Ingresa el título de la tarea">
+
+                        <label for="description">Descripción</label>
+                        <textarea id="description" name="description" placeholder="Describe la tarea"></textarea>
+
+                        <label for="priority">Prioridad</label>
+                        <select id="priority" name="priority">
+                            <option value="">Selecciona una prioridad</option>
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="alta">Alta</option>
+                        </select>
+
+                        <label for="deadline">Fecha límite</label>
+                        <input type="date" id="deadline" name="deadline">
+
+                        <button type="submit">Registrar tarea</button>
+                    </form>
                 </div>
-                <div id="completed-list"></div>
-            </div>
-        </div>
+            </section>
+        </aside>
 
-    </section>
+        <div class="content-panel">
+            <section>
+                <div id="all-progress" class="progress-summary hidden">
+                    <div class="progress-label-row">
+                        <span>Tareas realizadas</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                <div class="sections">
+                    <div id="pending-section" class="task-section">
+                        <div class="section-header">
+                            <h3>Tareas registradas (<span id="pending-count">0</span>)</h3>
+                            <div class="list-controls">
+                                <button id="sort-priority" class="sort-button">Ordenar por prioridad</button>
+                                <button id="sort-deadline" class="sort-button">Ordenar por fecha límite</button>
+                            </div>
+                        </div>
+                        <div id="pending-list"></div>
+                    </div>
+
+                    <div id="completed-section" class="task-section hidden">
+                        <div class="section-header">
+                            <h3>Tareas realizadas (<span id="completed-count">0</span>)</h3>
+                        </div>
+                        <div id="completed-list"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
 
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
