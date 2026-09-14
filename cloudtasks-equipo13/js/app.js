@@ -1,3 +1,6 @@
+import { supabaseClient } from "./supabaseClient.js";
+import { formatDate, sortTasks, computeProgress, validateTaskForm } from "./taskUtils.js";
+
 // Referencias a los elementos del DOM
 const taskForm = document.getElementById("task-form");
 const toggleNewTask = document.getElementById("toggle-new-task");
@@ -92,7 +95,7 @@ if (allBtn) allBtn.addEventListener('click', showAll);
 showPendingOnly();
 
 // Leer tareas desde Supabase
-async function fetchTasks() {
+export async function fetchTasks() {
     try {
         const { data, error } = await supabaseClient
             .from("tasks")
@@ -122,8 +125,9 @@ taskForm.addEventListener("submit", async function (event) {
     const priority = priorityInput.value;
     const deadline = deadlineInput.value;
 
-    if (!title || !description || !priority || !deadline) {
-        alert("Por favor, completa todos los campos.");
+    const validation = validateTaskForm({ title, description, priority, deadline });
+    if (!validation.valid) {
+        alert(validation.message);
         return;
     }
 
@@ -155,21 +159,13 @@ taskForm.addEventListener("submit", async function (event) {
 function updateProgressSummary(tasks) {
     if (!allProgress || !progressPercent || !progressBarFill) return;
 
-    const total = (tasks || []).length;
-    const completed = (tasks || []).filter(task => task.completed).length;
-    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const { total, completed, percentage, level } = computeProgress(tasks);
 
     progressPercent.textContent = `${percentage}%`;
     progressBarFill.style.width = `${percentage}%`;
 
     allProgress.classList.remove('low', 'medium', 'high');
-    if (percentage < 50) {
-        allProgress.classList.add('low');
-    } else if (percentage < 80) {
-        allProgress.classList.add('medium');
-    } else {
-        allProgress.classList.add('high');
-    }
+    allProgress.classList.add(level);
 
     const totalText = total === 0 ? '0 tareas' : `${completed}/${total} completadas`;
     allProgress.setAttribute('title', `${totalText} · ${percentage}% completado`);
@@ -177,21 +173,10 @@ function updateProgressSummary(tasks) {
 }
 
 // Renderizar tareas en el DOM
-function renderTasks(tasks) {
-    // Separar pendientes y completadas
-    const pending = (tasks || []).filter(t => !t.completed);
-    const completed = (tasks || []).filter(t => t.completed);
-
-    // Aplicar ordenamiento si corresponde
-    const priorityRank = (p) => (p === 'alta' ? 3 : p === 'media' ? 2 : 1);
-
-    if (currentSort === 'priority') {
-        pending.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
-        completed.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
-    } else if (currentSort === 'deadline') {
-        pending.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-        completed.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-    }
+export function renderTasks(tasks) {
+    // Separar pendientes y completadas, y aplicar ordenamiento si corresponde
+    const pending = sortTasks((tasks || []).filter(t => !t.completed), currentSort);
+    const completed = sortTasks((tasks || []).filter(t => t.completed), currentSort);
 
     // Contenedores
     pendingList.innerHTML = "";
@@ -323,7 +308,7 @@ function getTrashIcon() {
 }
 
 // Actualizar estado de tarea en Supabase
-async function toggleTaskStatus(taskId, currentStatus) {
+export async function toggleTaskStatus(taskId, currentStatus) {
     try {
         const { error } = await supabaseClient
             .from("tasks")
@@ -340,7 +325,7 @@ async function toggleTaskStatus(taskId, currentStatus) {
 }
 
 // Eliminar tarea en Supabase
-async function deleteTask(taskId) {
+export async function deleteTask(taskId) {
     const confirmation = confirm("¿Estás seguro de que deseas eliminar esta tarea?");
     if (!confirmation) return;
 
@@ -357,12 +342,4 @@ async function deleteTask(taskId) {
         console.error("Error al eliminar la tarea:", error.message);
         alert("Ocurrió un error al eliminar la tarea.");
     }
-}
-
-// Convertir fecha YYYY-MM-DD a DD/MM/YYYY
-function formatDate(dateString) {
-    if (!dateString) return "";
-    const dateParts = dateString.split("-");
-    if (dateParts.length < 3) return dateString;
-    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
 }
