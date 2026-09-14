@@ -12,41 +12,7 @@
 
 <body>
 
-    <--Login-->
-    <section id="auth-section" class="auth-section">
-        <div class="auth-card">
-            <h1>CloudTasks</h1>
-            <p>Inicia sesión para administrar tus tareas</p>
-
-            <form id="auth-form">
-                <label for="auth-email">Correo electrónico</label>
-                <input
-                        type="email"
-                        id="auth-email"
-                        placeholder="correo@ejemplo.com"
-                        required
-                >
-
-                <label for="auth-password">Contraseña</label>
-                <input
-                        type="password"
-                        id="auth-password"
-                        placeholder="Mínimo 6 caracteres"
-                        minlength="6"
-                        required
-                >
-
-                <button type="submit">Iniciar sesión</button>
-                <button type="button" id="register-button" class="secondary-button">
-                    Crear cuenta
-                </button>
-
-                <p id="auth-message" class="auth-message"></p>
-            </form>
-        </div>
-    </section>
-
-<main id="app-content" hidden>
+<main>
 
     <div class="app-shell">
         <aside class="sidebar-panel">
@@ -58,14 +24,6 @@
 
             <header>
                 <h1>Registro de tareas</h1>
-
-                <div class="user-information">
-                    <span id="user-email"></span>
-
-                    <button id="logout-button" type="button">
-                        Cerrar sesión
-                    </button>
-                </div>
             </header>
 
             <section>
