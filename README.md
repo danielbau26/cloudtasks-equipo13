@@ -4,12 +4,12 @@ CloudTasks es una aplicación web que permite registrar y gestionar tareas, desa
 
 ## Funcionalidades
 
-- Crear tarea con título, descripción, prioridad (baja/media/alta) y fecha límite.
-- Listar tareas pendientes y completadas.
-- Marcar tareas como completadas / revertir a pendientes.
+- Registrar una tarea.
+- Agregar título, descripción, prioridad y fecha límite.
+- Mostrar las tareas registradas.
+- Editar tareas.
 - Eliminar tareas.
-- Ordenar por prioridad o fecha límite.
-- Resumen de progreso (porcentaje de tareas completadas).
+- Guardar la información en Supabase.
 
 ## Tecnologías utilizadas
 
