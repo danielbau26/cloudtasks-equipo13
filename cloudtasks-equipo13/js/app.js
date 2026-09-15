@@ -28,11 +28,24 @@ const descriptionInput = document.getElementById("description");
 const priorityInput = document.getElementById("priority");
 const deadlineInput = document.getElementById("deadline");
 
+// Referencias del inicio de sesión
+const authSection = document.getElementById("auth-section");
+const appContent = document.getElementById("app-content");
+const showLoginTab = document.getElementById("show-login-tab");
+const showRegisterTab = document.getElementById("show-register-tab");
+const loginForm = document.getElementById("login-form");
+const loginEmail = document.getElementById("login-email");
+const loginPassword = document.getElementById("login-password");
+const registerForm = document.getElementById("register-form");
+const registerEmail = document.getElementById("register-email");
+const registerPassword = document.getElementById("register-password");
+const authMessage = document.getElementById("auth-message");
+const logoutButton = document.getElementById("logout-button");
+const userEmail = document.getElementById("user-email");
+
 let tasksCache = [];
 let currentSort = null; // 'priority' or 'deadline'
-
-// Cargar tareas al iniciar la aplicación
-document.addEventListener("DOMContentLoaded", fetchTasks);
+let currentUser = null;
 
 // Toggle formulario nueva tarea
 if (toggleNewTask) {
@@ -136,7 +149,8 @@ taskForm.addEventListener("submit", async function (event) {
         description: description,
         priority: priority,
         deadline: deadline,
-        completed: false
+        completed: false,
+        user_id: currentUser?.id
     };
 
     try {
@@ -343,3 +357,148 @@ export async function deleteTask(taskId) {
         alert("Ocurrió un error al eliminar la tarea.");
     }
 }
+
+// Mostrar mensajes en el formulario de acceso
+function showAuthMessage(message, type = "") {
+    authMessage.textContent = message;
+    authMessage.className = `auth-message ${type}`;
+}
+
+// Mostrar la aplicación o el inicio de sesión según haya sesión activa
+export function updateAuthenticationView(session) {
+    currentUser = session?.user ?? null;
+
+    if (currentUser) {
+        authSection.hidden = true;
+        appContent.hidden = false;
+
+        userEmail.textContent = currentUser.email;
+
+        showAuthMessage("");
+
+        fetchTasks();
+    } else {
+        authSection.hidden = false;
+        appContent.hidden = true;
+
+        userEmail.textContent = "";
+
+        tasksCache = [];
+        renderTasks([]);
+
+        showLoginForm();
+    }
+}
+
+// Comprobar si el usuario ya tenía una sesión abierta
+async function initializeAuthentication() {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        console.error("Error al comprobar la sesión:", error.message);
+        showAuthMessage("No se pudo comprobar la sesión.", "error");
+        return;
+    }
+
+    updateAuthenticationView(data.session);
+}
+
+// Alternar entre el formulario de inicio de sesión y el de registro
+function showLoginForm() {
+    loginForm.classList.remove("hidden");
+    registerForm.classList.add("hidden");
+    showLoginTab.classList.add("active");
+    showRegisterTab.classList.remove("active");
+    showAuthMessage("");
+}
+
+function showRegisterForm() {
+    loginForm.classList.add("hidden");
+    registerForm.classList.remove("hidden");
+    showLoginTab.classList.remove("active");
+    showRegisterTab.classList.add("active");
+    showAuthMessage("");
+}
+
+showLoginTab.addEventListener("click", showLoginForm);
+showRegisterTab.addEventListener("click", showRegisterForm);
+
+// Iniciar sesión
+loginForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const email = loginEmail.value.trim();
+    const password = loginPassword.value;
+
+    if (!email || !password) {
+        showAuthMessage("Completa el correo y la contraseña.", "error");
+        return;
+    }
+
+    showAuthMessage("Iniciando sesión...");
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        console.error("Error al iniciar sesión:", error.message);
+        showAuthMessage("Correo o contraseña incorrectos.", "error");
+        return;
+    }
+
+    loginForm.reset();
+    showAuthMessage("");
+});
+
+// Crear una cuenta
+registerForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const email = registerEmail.value.trim();
+    const password = registerPassword.value;
+
+    if (!email) {
+        showAuthMessage("Ingresa un correo electrónico.", "error");
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+        return;
+    }
+
+    showAuthMessage("Creando cuenta...");
+
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+
+    if (error) {
+        console.error("Error al crear la cuenta:", error.message);
+        showAuthMessage(error.message, "error");
+        return;
+    }
+
+    if (data.session) {
+        registerForm.reset();
+        showAuthMessage("Cuenta creada correctamente.", "success");
+    } else {
+        registerForm.reset();
+        showAuthMessage("Cuenta creada. Revisa tu correo para confirmarla.", "success");
+    }
+});
+
+// Cerrar sesión
+logoutButton.addEventListener("click", async function () {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        console.error("Error al cerrar sesión:", error.message);
+        alert("No se pudo cerrar la sesión.");
+    }
+});
+
+// Detectar inicio o cierre de sesión
+supabaseClient.auth.onAuthStateChange(function (_event, session) {
+    updateAuthenticationView(session);
+});
+
+// Iniciar el sistema de autenticación
+document.addEventListener("DOMContentLoaded", initializeAuthentication);
