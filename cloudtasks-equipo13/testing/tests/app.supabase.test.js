@@ -56,7 +56,7 @@ beforeAll(async () => {
     app = await import("../../js/app.js");
 
     // Simula una sesión activa para las pruebas que no son de autenticación.
-    app.updateAuthenticationView({ user: { id: "test-user-id", email: "test@example.com" } });
+    app.updateAuthenticationView({ user: { id: "test-user-id", user_metadata: { username: "testuser" } } });
     await flushPromises();
 });
 
@@ -194,16 +194,16 @@ describe("creación de tareas (submit del formulario)", () => {
 describe("autenticación", () => {
     afterEach(() => {
         // Restaura la sesión simulada y el tab de login para no afectar otras pruebas.
-        app.updateAuthenticationView({ user: { id: "test-user-id", email: "test@example.com" } });
+        app.updateAuthenticationView({ user: { id: "test-user-id", user_metadata: { username: "testuser" } } });
         document.getElementById("show-login-tab").dispatchEvent(new Event("click"));
     });
 
     it("updateAuthenticationView muestra la app y oculta el login cuando hay sesión", () => {
-        app.updateAuthenticationView({ user: { id: "u1", email: "u1@example.com" } });
+        app.updateAuthenticationView({ user: { id: "u1", user_metadata: { username: "u1" } } });
 
         expect(document.getElementById("auth-section").hidden).toBe(true);
         expect(document.getElementById("app-content").hidden).toBe(false);
-        expect(document.getElementById("user-email").textContent).toBe("u1@example.com");
+        expect(document.getElementById("user-username").textContent).toBe("u1");
     });
 
     it("updateAuthenticationView oculta la app y muestra el login cuando no hay sesión", () => {
@@ -211,7 +211,7 @@ describe("autenticación", () => {
 
         expect(document.getElementById("auth-section").hidden).toBe(false);
         expect(document.getElementById("app-content").hidden).toBe(true);
-        expect(document.getElementById("user-email").textContent).toBe("");
+        expect(document.getElementById("user-username").textContent).toBe("");
     });
 
     it("el tab 'Crear cuenta' muestra el formulario de registro y oculta el de login", () => {
@@ -226,40 +226,51 @@ describe("autenticación", () => {
         expect(document.getElementById("register-form").classList.contains("hidden")).toBe(true);
     });
 
-    it("inicia sesión con signInWithPassword al enviar el formulario de acceso", async () => {
-        document.getElementById("login-email").value = "user@example.com";
+    it("inicia sesión con signInWithPassword usando un correo interno derivado del usuario", async () => {
+        document.getElementById("login-username").value = "MiUsuario";
         document.getElementById("login-password").value = "secreto123";
 
         document.getElementById("login-form").dispatchEvent(new Event("submit", { cancelable: true }));
         await flushPromises();
 
         expect(supabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
-            email: "user@example.com",
+            email: "miusuario@cloudtasks.local",
             password: "secreto123"
         });
     });
 
     it("muestra un mensaje de error si el login falla", async () => {
         supabaseClient.auth.signInWithPassword.mockResolvedValueOnce({ error: { message: "bad credentials" } });
-        document.getElementById("login-email").value = "user@example.com";
+        document.getElementById("login-username").value = "usuario";
         document.getElementById("login-password").value = "incorrecta";
 
         document.getElementById("login-form").dispatchEvent(new Event("submit", { cancelable: true }));
         await flushPromises();
 
-        expect(document.getElementById("auth-message").textContent).toBe("Correo o contraseña incorrectos.");
+        expect(document.getElementById("auth-message").textContent).toBe("Usuario o contraseña incorrectos.");
     });
 
-    it("crea una cuenta con signUp al enviar el formulario de registro", async () => {
-        document.getElementById("register-email").value = "nuevo@example.com";
+    it("no llama a Supabase si el nombre de usuario tiene caracteres inválidos", async () => {
+        document.getElementById("register-username").value = "usuario con espacios";
+        document.getElementById("register-password").value = "secreto123";
+
+        document.getElementById("register-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(supabaseClient.auth.signUp).not.toHaveBeenCalled();
+    });
+
+    it("crea una cuenta con signUp usando un correo interno derivado del usuario", async () => {
+        document.getElementById("register-username").value = "NuevoUsuario";
         document.getElementById("register-password").value = "secreto123";
 
         document.getElementById("register-form").dispatchEvent(new Event("submit", { cancelable: true }));
         await flushPromises();
 
         expect(supabaseClient.auth.signUp).toHaveBeenCalledWith({
-            email: "nuevo@example.com",
-            password: "secreto123"
+            email: "nuevousuario@cloudtasks.local",
+            password: "secreto123",
+            options: { data: { username: "NuevoUsuario" } }
         });
     });
 

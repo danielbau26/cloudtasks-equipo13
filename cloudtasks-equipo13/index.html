@@ -22,8 +22,8 @@
         </div>
 
         <form id="login-form" class="auth-form">
-            <label for="login-email">Correo electrónico</label>
-            <input type="email" id="login-email" placeholder="correo@ejemplo.com" required>
+            <label for="login-username">Nombre de usuario</label>
+            <input type="text" id="login-username" placeholder="usuario123" required>
 
             <label for="login-password">Contraseña</label>
             <input type="password" id="login-password" placeholder="Tu contraseña" minlength="6" required>
@@ -32,8 +32,8 @@
         </form>
 
         <form id="register-form" class="auth-form hidden">
-            <label for="register-email">Correo electrónico</label>
-            <input type="email" id="register-email" placeholder="correo@ejemplo.com" required>
+            <label for="register-username">Nombre de usuario</label>
+            <input type="text" id="register-username" placeholder="usuario123" required>
 
             <label for="register-password">Contraseña</label>
             <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" minlength="6" required>
@@ -59,7 +59,7 @@
                 <h1>Registro de tareas</h1>
 
                 <div class="user-information">
-                    <span id="user-email"></span>
+                    <span id="user-username"></span>
                     <button id="logout-button" type="button">Cerrar sesión</button>
                 </div>
             </header>
