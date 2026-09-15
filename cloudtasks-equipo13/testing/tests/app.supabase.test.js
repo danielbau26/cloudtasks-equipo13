@@ -1,10 +1,19 @@
-import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 // Mockeamos el cliente de Supabase antes de importar app.js, para no golpear la red real.
 vi.mock("../../js/supabaseClient.js", () => ({
-    supabaseClient: { from: vi.fn() }
+    supabaseClient: {
+        from: vi.fn(),
+        auth: {
+            getSession: vi.fn(() => Promise.resolve({ data: { session: null }, error: null })),
+            onAuthStateChange: vi.fn(),
+            signInWithPassword: vi.fn(() => Promise.resolve({ error: null })),
+            signUp: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+            signOut: vi.fn(() => Promise.resolve({ error: null }))
+        }
+    }
 }));
 
 // Construye un "query builder" falso que imita la cadena encadenable de supabase-js
@@ -45,6 +54,10 @@ beforeAll(async () => {
 
     ({ supabaseClient } = await import("../../js/supabaseClient.js"));
     app = await import("../../js/app.js");
+
+    // Simula una sesión activa para las pruebas que no son de autenticación.
+    app.updateAuthenticationView({ user: { id: "test-user-id", email: "test@example.com" } });
+    await flushPromises();
 });
 
 beforeEach(() => {
@@ -151,7 +164,7 @@ describe("creación de tareas (submit del formulario)", () => {
         await flushPromises();
 
         expect(builder.insert).toHaveBeenCalledWith([
-            expect.objectContaining({ title: "Nueva tarea", description: "Una descripción", priority: "media", deadline: "2026-10-01", completed: false })
+            expect.objectContaining({ title: "Nueva tarea", description: "Una descripción", priority: "media", deadline: "2026-10-01", completed: false, user_id: "test-user-id" })
         ]);
     });
 
@@ -175,5 +188,85 @@ describe("creación de tareas (submit del formulario)", () => {
         await flushPromises();
 
         expect(global.alert).toHaveBeenCalledWith("Ocurrió un error al guardar la tarea en la base de datos.");
+    });
+});
+
+describe("autenticación", () => {
+    afterEach(() => {
+        // Restaura la sesión simulada y el tab de login para no afectar otras pruebas.
+        app.updateAuthenticationView({ user: { id: "test-user-id", email: "test@example.com" } });
+        document.getElementById("show-login-tab").dispatchEvent(new Event("click"));
+    });
+
+    it("updateAuthenticationView muestra la app y oculta el login cuando hay sesión", () => {
+        app.updateAuthenticationView({ user: { id: "u1", email: "u1@example.com" } });
+
+        expect(document.getElementById("auth-section").hidden).toBe(true);
+        expect(document.getElementById("app-content").hidden).toBe(false);
+        expect(document.getElementById("user-email").textContent).toBe("u1@example.com");
+    });
+
+    it("updateAuthenticationView oculta la app y muestra el login cuando no hay sesión", () => {
+        app.updateAuthenticationView(null);
+
+        expect(document.getElementById("auth-section").hidden).toBe(false);
+        expect(document.getElementById("app-content").hidden).toBe(true);
+        expect(document.getElementById("user-email").textContent).toBe("");
+    });
+
+    it("el tab 'Crear cuenta' muestra el formulario de registro y oculta el de login", () => {
+        document.getElementById("show-register-tab").dispatchEvent(new Event("click"));
+
+        expect(document.getElementById("login-form").classList.contains("hidden")).toBe(true);
+        expect(document.getElementById("register-form").classList.contains("hidden")).toBe(false);
+
+        document.getElementById("show-login-tab").dispatchEvent(new Event("click"));
+
+        expect(document.getElementById("login-form").classList.contains("hidden")).toBe(false);
+        expect(document.getElementById("register-form").classList.contains("hidden")).toBe(true);
+    });
+
+    it("inicia sesión con signInWithPassword al enviar el formulario de acceso", async () => {
+        document.getElementById("login-email").value = "user@example.com";
+        document.getElementById("login-password").value = "secreto123";
+
+        document.getElementById("login-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(supabaseClient.auth.signInWithPassword).toHaveBeenCalledWith({
+            email: "user@example.com",
+            password: "secreto123"
+        });
+    });
+
+    it("muestra un mensaje de error si el login falla", async () => {
+        supabaseClient.auth.signInWithPassword.mockResolvedValueOnce({ error: { message: "bad credentials" } });
+        document.getElementById("login-email").value = "user@example.com";
+        document.getElementById("login-password").value = "incorrecta";
+
+        document.getElementById("login-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(document.getElementById("auth-message").textContent).toBe("Correo o contraseña incorrectos.");
+    });
+
+    it("crea una cuenta con signUp al enviar el formulario de registro", async () => {
+        document.getElementById("register-email").value = "nuevo@example.com";
+        document.getElementById("register-password").value = "secreto123";
+
+        document.getElementById("register-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(supabaseClient.auth.signUp).toHaveBeenCalledWith({
+            email: "nuevo@example.com",
+            password: "secreto123"
+        });
+    });
+
+    it("cierra sesión con signOut al pulsar 'Cerrar sesión'", async () => {
+        document.getElementById("logout-button").dispatchEvent(new Event("click"));
+        await flushPromises();
+
+        expect(supabaseClient.auth.signOut).toHaveBeenCalled();
     });
 });

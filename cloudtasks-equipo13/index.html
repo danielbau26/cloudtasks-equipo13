@@ -12,7 +12,40 @@
 
 <body>
 
-<main>
+<section id="auth-section" class="auth-section">
+    <div class="auth-card">
+        <h1>CloudTasks</h1>
+
+        <div class="auth-tabs">
+            <button type="button" id="show-login-tab" class="auth-tab active">Iniciar sesión</button>
+            <button type="button" id="show-register-tab" class="auth-tab">Crear cuenta</button>
+        </div>
+
+        <form id="login-form" class="auth-form">
+            <label for="login-email">Correo electrónico</label>
+            <input type="email" id="login-email" placeholder="correo@ejemplo.com" required>
+
+            <label for="login-password">Contraseña</label>
+            <input type="password" id="login-password" placeholder="Tu contraseña" minlength="6" required>
+
+            <button type="submit">Iniciar sesión</button>
+        </form>
+
+        <form id="register-form" class="auth-form hidden">
+            <label for="register-email">Correo electrónico</label>
+            <input type="email" id="register-email" placeholder="correo@ejemplo.com" required>
+
+            <label for="register-password">Contraseña</label>
+            <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" minlength="6" required>
+
+            <button type="submit">Crear cuenta</button>
+        </form>
+
+        <p id="auth-message" class="auth-message"></p>
+    </div>
+</section>
+
+<main id="app-content" hidden>
 
     <div class="app-shell">
         <aside class="sidebar-panel">
@@ -24,6 +57,11 @@
 
             <header>
                 <h1>Registro de tareas</h1>
+
+                <div class="user-information">
+                    <span id="user-email"></span>
+                    <button id="logout-button" type="button">Cerrar sesión</button>
+                </div>
             </header>
 
             <section>
