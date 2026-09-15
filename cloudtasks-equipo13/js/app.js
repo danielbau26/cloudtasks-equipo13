@@ -34,14 +34,23 @@ const appContent = document.getElementById("app-content");
 const showLoginTab = document.getElementById("show-login-tab");
 const showRegisterTab = document.getElementById("show-register-tab");
 const loginForm = document.getElementById("login-form");
-const loginEmail = document.getElementById("login-email");
+const loginUsername = document.getElementById("login-username");
 const loginPassword = document.getElementById("login-password");
 const registerForm = document.getElementById("register-form");
-const registerEmail = document.getElementById("register-email");
+const registerUsername = document.getElementById("register-username");
 const registerPassword = document.getElementById("register-password");
 const authMessage = document.getElementById("auth-message");
 const logoutButton = document.getElementById("logout-button");
-const userEmail = document.getElementById("user-email");
+const userUsername = document.getElementById("user-username");
+
+// Supabase Auth requiere un correo, así que a cada nombre de usuario le
+// asignamos un correo interno ficticio que el usuario nunca ve.
+const USERNAME_EMAIL_DOMAIN = "cloudtasks.local";
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
+
+function usernameToEmail(username) {
+    return `${username.toLowerCase()}@${USERNAME_EMAIL_DOMAIN}`;
+}
 
 let tasksCache = [];
 let currentSort = null; // 'priority' or 'deadline'
@@ -372,7 +381,7 @@ export function updateAuthenticationView(session) {
         authSection.hidden = true;
         appContent.hidden = false;
 
-        userEmail.textContent = currentUser.email;
+        userUsername.textContent = currentUser.user_metadata?.username ?? "";
 
         showAuthMessage("");
 
@@ -381,7 +390,7 @@ export function updateAuthenticationView(session) {
         authSection.hidden = false;
         appContent.hidden = true;
 
-        userEmail.textContent = "";
+        userUsername.textContent = "";
 
         tasksCache = [];
         renderTasks([]);
@@ -427,21 +436,24 @@ showRegisterTab.addEventListener("click", showRegisterForm);
 loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    const email = loginEmail.value.trim();
+    const username = loginUsername.value.trim();
     const password = loginPassword.value;
 
-    if (!email || !password) {
-        showAuthMessage("Completa el correo y la contraseña.", "error");
+    if (!username || !password) {
+        showAuthMessage("Completa el usuario y la contraseña.", "error");
         return;
     }
 
     showAuthMessage("Iniciando sesión...");
 
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email: usernameToEmail(username),
+        password
+    });
 
     if (error) {
         console.error("Error al iniciar sesión:", error.message);
-        showAuthMessage("Correo o contraseña incorrectos.", "error");
+        showAuthMessage("Usuario o contraseña incorrectos.", "error");
         return;
     }
 
@@ -453,11 +465,11 @@ loginForm.addEventListener("submit", async function (event) {
 registerForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
-    const email = registerEmail.value.trim();
+    const username = registerUsername.value.trim();
     const password = registerPassword.value;
 
-    if (!email) {
-        showAuthMessage("Ingresa un correo electrónico.", "error");
+    if (!USERNAME_PATTERN.test(username)) {
+        showAuthMessage("El usuario debe tener 3-30 caracteres: letras, números, punto, guion o guion bajo.", "error");
         return;
     }
 
@@ -468,21 +480,25 @@ registerForm.addEventListener("submit", async function (event) {
 
     showAuthMessage("Creando cuenta...");
 
-    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    const { error } = await supabaseClient.auth.signUp({
+        email: usernameToEmail(username),
+        password,
+        options: { data: { username } }
+    });
 
     if (error) {
         console.error("Error al crear la cuenta:", error.message);
-        showAuthMessage(error.message, "error");
+        showAuthMessage(
+            error.message === "User already registered"
+                ? "Ese nombre de usuario ya está en uso."
+                : error.message,
+            "error"
+        );
         return;
     }
 
-    if (data.session) {
-        registerForm.reset();
-        showAuthMessage("Cuenta creada correctamente.", "success");
-    } else {
-        registerForm.reset();
-        showAuthMessage("Cuenta creada. Revisa tu correo para confirmarla.", "success");
-    }
+    registerForm.reset();
+    showAuthMessage("Cuenta creada correctamente. Ya puedes iniciar sesión.", "success");
 });
 
 // Cerrar sesión
