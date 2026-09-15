@@ -165,4 +165,15 @@ describe("creación de tareas (submit del formulario)", () => {
         expect(supabaseClient.from).not.toHaveBeenCalled();
         expect(global.alert).toHaveBeenCalledWith("Por favor, completa todos los campos.");
     });
+
+    it("avisa con un alert si Supabase falla al crear la tarea", async () => {
+        supabaseClient.from.mockReturnValue(
+            createQueryBuilder({ error: { message: "no se pudo insertar" } })
+        );
+
+        document.getElementById("task-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(global.alert).toHaveBeenCalledWith("Ocurrió un error al guardar la tarea en la base de datos.");
+    });
 });
