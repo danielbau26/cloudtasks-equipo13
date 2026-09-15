@@ -1,0 +1,168 @@
+import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+// Mockeamos el cliente de Supabase antes de importar app.js, para no golpear la red real.
+vi.mock("../../js/supabaseClient.js", () => ({
+    supabaseClient: { from: vi.fn() }
+}));
+
+// Construye un "query builder" falso que imita la cadena encadenable de supabase-js
+// (from().select().order() / from().update().eq() / etc.) y que resuelve `result` al ser awaited.
+function createQueryBuilder(result) {
+    const builder = {};
+    ["select", "order", "insert", "update", "delete", "eq"].forEach((method) => {
+        builder[method] = vi.fn(() => builder);
+    });
+    builder.then = (resolve, reject) => Promise.resolve(result).then(resolve, reject);
+    return builder;
+}
+
+function loadIndexHtmlBody() {
+    // Ruta absoluta al index.html real de la app, independiente del cwd desde el que corra vitest.
+    // (el import.meta.url se guarda en una variable para evitar que Vite lo trate como un
+    // "new URL(asset, import.meta.url)" y lo reescriba como una URL de dev-server)
+    const currentModuleUrl = import.meta.url;
+    const indexPath = fileURLToPath(new URL("../../index.html", currentModuleUrl));
+    const html = readFileSync(indexPath, "utf-8");
+    const withoutScripts = html.replace(/<script[\s\S]*?<\/script>/g, "");
+    const match = withoutScripts.match(/<body[^>]*>([\s\S]*)<\/body>/);
+    return match ? match[1] : "";
+}
+
+async function flushPromises() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+let supabaseClient;
+let app;
+
+beforeAll(async () => {
+    document.body.innerHTML = loadIndexHtmlBody();
+    // jsdom no implementa alert/confirm; los stubeamos para controlar el flujo.
+    vi.stubGlobal("alert", vi.fn());
+    vi.stubGlobal("confirm", vi.fn(() => true));
+
+    ({ supabaseClient } = await import("../../js/supabaseClient.js"));
+    app = await import("../../js/app.js");
+});
+
+beforeEach(() => {
+    supabaseClient.from.mockReset();
+    global.alert.mockClear();
+    global.confirm.mockClear();
+    global.confirm.mockReturnValue(true);
+});
+
+describe("fetchTasks", () => {
+    it("renderiza las tareas y oculta el aviso de error cuando Supabase responde bien", async () => {
+        const tasks = [
+            { id: 1, title: "A", description: "d", priority: "alta", deadline: "2026-09-20", completed: false },
+            { id: 2, title: "B", description: "d", priority: "baja", deadline: "2026-09-21", completed: true }
+        ];
+        supabaseClient.from.mockReturnValue(createQueryBuilder({ data: tasks, error: null }));
+
+        await app.fetchTasks();
+
+        expect(document.getElementById("connection-error").hidden).toBe(true);
+        expect(document.getElementById("pending-count").textContent).toBe("1");
+        expect(document.getElementById("completed-count").textContent).toBe("1");
+        expect(document.querySelectorAll("#pending-list .task-card").length).toBe(1);
+        expect(document.querySelectorAll("#completed-list .task-card").length).toBe(1);
+    });
+
+    it("muestra el aviso de conexión cuando Supabase devuelve un error", async () => {
+        supabaseClient.from.mockReturnValue(
+            createQueryBuilder({ data: null, error: { message: "fallo de red" } })
+        );
+
+        await app.fetchTasks();
+
+        expect(document.getElementById("connection-error").hidden).toBe(false);
+    });
+});
+
+describe("toggleTaskStatus", () => {
+    it("marca la tarea como completada y refresca la lista", async () => {
+        const builder = createQueryBuilder({ data: [], error: null });
+        supabaseClient.from.mockReturnValue(builder);
+
+        await app.toggleTaskStatus(42, false);
+
+        expect(supabaseClient.from).toHaveBeenCalledWith("tasks");
+        expect(builder.update).toHaveBeenCalledWith({ completed: true });
+        expect(builder.eq).toHaveBeenCalledWith("id", 42);
+        expect(global.alert).not.toHaveBeenCalled();
+    });
+
+    it("avisa con un alert si Supabase falla al actualizar", async () => {
+        supabaseClient.from.mockReturnValue(
+            createQueryBuilder({ error: { message: "no se pudo actualizar" } })
+        );
+
+        await app.toggleTaskStatus(1, true);
+
+        expect(global.alert).toHaveBeenCalledWith("Ocurrió un error al actualizar el estado de la tarea.");
+    });
+});
+
+describe("deleteTask", () => {
+    it("no elimina nada si el usuario cancela la confirmación", async () => {
+        global.confirm.mockReturnValue(false);
+
+        await app.deleteTask(7);
+
+        expect(supabaseClient.from).not.toHaveBeenCalled();
+    });
+
+    it("elimina la tarea cuando el usuario confirma", async () => {
+        const builder = createQueryBuilder({ error: null });
+        supabaseClient.from.mockReturnValue(builder);
+
+        await app.deleteTask(7);
+
+        expect(supabaseClient.from).toHaveBeenCalledWith("tasks");
+        expect(builder.delete).toHaveBeenCalled();
+        expect(builder.eq).toHaveBeenCalledWith("id", 7);
+    });
+
+    it("avisa con un alert si Supabase falla al eliminar", async () => {
+        supabaseClient.from.mockReturnValue(createQueryBuilder({ error: { message: "boom" } }));
+
+        await app.deleteTask(7);
+
+        expect(global.alert).toHaveBeenCalledWith("Ocurrió un error al eliminar la tarea.");
+    });
+});
+
+describe("creación de tareas (submit del formulario)", () => {
+    beforeEach(() => {
+        document.getElementById("title").value = "Nueva tarea";
+        document.getElementById("description").value = "Una descripción";
+        document.getElementById("priority").value = "media";
+        document.getElementById("deadline").value = "2026-10-01";
+    });
+
+    it("inserta la tarea en Supabase cuando el formulario es válido", async () => {
+        const builder = createQueryBuilder({ error: null });
+        supabaseClient.from.mockReturnValue(builder);
+
+        document.getElementById("task-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(builder.insert).toHaveBeenCalledWith([
+            expect.objectContaining({ title: "Nueva tarea", description: "Una descripción", priority: "media", deadline: "2026-10-01", completed: false })
+        ]);
+    });
+
+    it("no llama a Supabase y muestra un alert si falta un campo", async () => {
+        document.getElementById("title").value = "";
+        supabaseClient.from.mockReturnValue(createQueryBuilder({ error: null }));
+
+        document.getElementById("task-form").dispatchEvent(new Event("submit", { cancelable: true }));
+        await flushPromises();
+
+        expect(supabaseClient.from).not.toHaveBeenCalled();
+        expect(global.alert).toHaveBeenCalledWith("Por favor, completa todos los campos.");
+    });
+});
