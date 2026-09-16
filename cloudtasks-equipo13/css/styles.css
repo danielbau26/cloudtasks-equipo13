@@ -19,7 +19,7 @@ body {
 }
 
 .auth-card {
-    padding: 30px;
+        gap: 8px;
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
@@ -517,7 +517,271 @@ details summary {
     .sidebar-panel {
         width: 360px;
         flex-shrink: 0;
+        position: sticky;
+        top: 40px;
+        height: calc(100vh - 80px);
+        align-self: flex-start;
+        overflow-y: auto;
+        /* Hacer que el lateral sea un panel continuo */
+        padding: 20px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(16,24,40,0.06);
     }
+
+    .sidebar-panel > header { position: relative; }
+
+    /* Profile menu (avatar button) positioned top-right of the blue banner */
+    .profile-menu { position: absolute; top: 50%; right: 18px; transform: translateY(-50%); z-index: 30; }
+    .profile-button { background: transparent; border: none; padding: 6px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+
+    /* Cuando el avatar está sobre el banner azul, mostrarlo en blanco para buen contraste */
+    .sidebar-panel > header .profile-button .user-avatar svg { color: #ffffff; }
+
+    .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        min-width: 200px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+        padding: 8px;
+        border: 1px solid rgba(2,6,23,0.04);
+    }
+
+    /* When profile-menu is placed within .controls (desktop center), make it flow and center the dropdown */
+    .sidebar-panel .controls .profile-menu {
+        position: relative;
+        top: auto;
+        right: auto;
+        transform: none;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 6px 0;
+    }
+
+    .sidebar-panel .controls .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%);
+        right: auto;
+    }
+
+    /* Hacer el botón de perfil más ancho y del mismo estilo que "Crear nueva tarea" */
+    .sidebar-panel .controls .profile-menu .profile-button {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background-color: #2563eb;
+        color: #ffffff;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .sidebar-panel .controls .profile-menu .profile-button:hover {
+        background-color: #1d4ed8;
+    }
+
+    .sidebar-panel .controls .profile-menu .profile-button .user-avatar {
+        background: #ffffff;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        padding: 4px;
+    }
+
+    .sidebar-panel .controls .profile-menu .profile-button .profile-name-inline {
+        color: #ffffff;
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    /* Asegurar que el SVG dentro del círculo muestre color azul (icono) */
+    .sidebar-panel .controls .profile-menu .profile-button .user-avatar svg { color: #2563eb; }
+
+    .profile-dropdown .profile-info { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid rgba(2,6,23,0.04); }
+    .profile-dropdown .profile-info .user-avatar.small { width: 36px; height: 36px; background: rgba(37,99,235,0.08); display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; }
+    .profile-dropdown .profile-info .user-avatar.small svg { color: #2563eb; }
+
+    /* Evitar duplicados: ocultar cualquier avatar directo del header excepto el botón de perfil */
+    .sidebar-panel > header .user-avatar { display: none; }
+    .sidebar-panel > header .profile-button .user-avatar { display: inline-flex; }
+    .sidebar-panel > header .profile-dropdown .user-avatar.small { display: inline-flex; }
+    .profile-dropdown .profile-name { font-size: 14px; color: #0f172a; }
+
+    .profile-dropdown .profile-actions { display: flex; flex-direction: column; padding: 8px 6px; gap: 6px; }
+    .dropdown-item { background: transparent; border: none; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .dropdown-item:hover { background: rgba(37,99,235,0.04); }
+    .dropdown-item.destructive { color: #dc2626; }
+
+    /* Ajuste fino en escritorio: subir ligeramente el avatar de perfil dentro del banner */
+    @media (min-width: 1200px) {
+        /* Mover el avatar más arriba en pantallas grandes */
+        .profile-menu { top: 6px; transform: translateY(0); }
+    }
+
+
+    /* Dentro del panel lateral no queremos las tarjetas blancas separadas: hacerlos continuos */
+    .sidebar-panel > header,
+    .sidebar-panel > section {
+        background: transparent;
+        margin: 0 0 18px;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    /* Asegurar que los controles dentro ocupen el ancho completo */
+    .sidebar-panel .controls {
+        padding: 12px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    /* En escritorio, mostrar primero el perfil y luego el botón crear (intercambiar posiciones) */
+    .sidebar-panel .controls .profile-menu { order: 0; }
+    .sidebar-panel .controls .left-controls { order: 1; }
+    .sidebar-panel .controls .right-controls { order: 2; }
+
+    /* Reorganizar botones para la vista de escritorio: apilados y ocupando ancho */
+    .sidebar-panel .left-controls,
+    .sidebar-panel .right-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    /* Asegurar que la variante móvil esté oculta en escritorio */
+    .profile-mobile { display: none !important; }
+    .profile-menu { display: flex !important; }
+
+    .sidebar-panel .menu-button {
+        width: 100%;
+        text-align: left;
+        padding: 10px 14px;
+        border-radius: 8px;
+    }
+
+    .sidebar-panel .new-task-button {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 16px;
+        font-size: 16px;
+    }
+
+    /* Estilizar la cabecera dentro de la sidebar para mostrar usuario estético */
+    .sidebar-panel > header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding-bottom: 8px;
+    }
+
+    .sidebar-panel .user-information {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    #user-username {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 18px;
+        background: linear-gradient(90deg,#eef2ff,#fff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: #0f172a;
+    }
+
+    #logout-button {
+        background-color: transparent;
+        color: #2563eb;
+        border: 1px solid #e6eefc;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    /* Separador visual largo en la sidebar para que el panel se vea completo */
+    .sidebar-panel::after{
+        content: '';
+        display: block;
+        height: 24px;
+        width: 100%;
+    }
+
+    /* Estilos para el título azul en la sidebar */
+    .sidebar-panel .app-title {
+        width: 100%;
+        padding: 20px 18px;
+        background: linear-gradient(90deg,#2563eb,#1e40af);
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(37,99,235,0.12);
+        font-size: 20px;
+        margin: 0 0 12px 0;
+        text-align: left;
+    }
+
+    /* Avatar junto al nombre */
+    .user-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.12);
+        border-radius: 50%;
+        padding: 4px;
+        box-shadow: 0 2px 6px rgba(2,6,23,0.06) inset;
+    }
+
+    .user-avatar svg { display: block; }
+
+    /* Ajuste del logout button dentro del panel azul: hacerlo pequeño en escritorio */
+    .sidebar-panel #logout-button {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.16);
+        color: #ffffff;
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+
+    /* En escritorio: avatar azul (panel blanco) y logout en la esquina derecha */
+    .sidebar-panel .user-avatar { background: transparent; }
+    .sidebar-panel .user-avatar svg { color: #2563eb; }
+    .sidebar-panel .user-left { align-items: center; }
+    .sidebar-panel .user-information { width: 100%; display: flex; align-items: center; }
+    .sidebar-panel #logout-button { margin-left: auto; color: #2563eb; border-color: #e6eefc; background: transparent; display: inline-flex; align-items: center; gap: 8px; }
+
+    /* Alineado fino: asegurar que avatar, texto y botón estén centrados verticalmente */
+    .sidebar-panel .user-left { display: inline-flex; align-items: center; gap: 10px; }
+    #user-username { display: inline-flex; align-items: center; font-size: 16px; line-height: 1; }
+    .sidebar-panel .user-avatar svg { width: 20px; height: 20px; }
+
 
     .content-panel {
         flex: 1;
@@ -557,6 +821,11 @@ details summary {
     .app-shell {
         display: block;
     }
+
+    /* En móvil preferimos la variante compacta entre título y controles */
+    .profile-mobile { display: flex; }
+    .profile-mobile.hidden { display: flex; }
+    .profile-menu { display: none !important; }
 
     .sidebar-panel,
     .content-panel {
@@ -626,10 +895,26 @@ details summary {
         font-size: 14px;
     }
 
+    /* Ocultar el nombre en el botón de perfil móvil (solo icono) */
+    .profile-button-mobile .profile-name-inline { display: none; }
+
+}
+
+@media (max-width: 900px) {
+    /* Asegurar que en móviles y tablet pequeñas el botón móvil sólo muestre icono */
+    .profile-button-mobile .profile-name-inline { display: none !important; }
+}
+
+@media (min-width: 901px) {
+    /* En escritorio el botón de perfil muestra nombre inline */
+    .sidebar-panel .controls .profile-menu .profile-button .profile-name-inline { display: inline-flex; }
+
     .right-controls {
         display: flex;
         flex-wrap: nowrap;
         gap: 6px;
+        align-items: center;
+        position: relative;
     }
 
     .menu-button {
@@ -638,5 +923,143 @@ details summary {
         justify-content: center;
         padding: 10px 8px;
         font-size: 12px;
+    }
+
+    /* Mostrar el botón de perfil en la derecha junto a los botones de filtro */
+    .right-controls .profile-mobile { display: inline-flex; }
+    .right-controls .profile-mobile.hidden { display: inline-flex; }
+
+    /* Estilos del popup móvil que aparece debajo del icono de perfil */
+    .mobile-profile-popup {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        min-width: 180px;
+        z-index: 9999; /* ensure overlay above all */
+        padding: 0; /* let profile-dropdown padding apply */
+    }
+
+    .mobile-profile-popup .mobile-profile-name { display: block; margin-bottom: 8px; color: #0f172a; font-weight: 700; }
+    .mobile-profile-popup .mobile-profile-actions { display: flex; gap: 6px; }
+    .mobile-profile-popup .dropdown-item { width: 100%; padding: 8px 10px; border-radius: 8px; text-align: left; }
+
+    /* Estilo para botón destructivo dentro del popup móvil: botón blanco con texto y borde rojo */
+    .mobile-profile-popup .dropdown-item.destructive {
+        background: #ffffff;
+        color: #dc2626;
+        border: 1px solid #dc2626;
+        box-shadow: none;
+    }
+
+    /* Móvil: separar logout del nombre y mostrar icono + texto */
+    .sidebar-panel > header .user-information {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .sidebar-panel #logout-button {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        background: transparent;
+        border: 1px solid rgba(37,99,235,0.08);
+        color: #2563eb;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .logout-icon svg { display: block; }
+    .logout-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; color: #2563eb; }
+    .logout-text { display: inline-block; }
+}
+
+/* Móvil: mostrar solo el icono de logout para ahorrar espacio */
+@media (max-width: 420px) {
+    .logout-text { display: none; }
+    /* Botón circular táctil para logout */
+    .sidebar-panel #logout-button {
+        padding: 0;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(37,99,235,0.10);
+        border: none;
+        box-shadow: 0 2px 6px rgba(2,6,23,0.06);
+    }
+    .sidebar-panel .logout-icon { width: 20px; height: 20px; color: #2563eb; display: inline-flex; align-items: center; justify-content: center; }
+}
+
+/* Asegurar que en pantallas muy angostas el icono sea visible y esté a la derecha */
+@media (max-width: 480px) {
+    .sidebar-panel > header { display: flex; align-items: center; justify-content: space-between; }
+    .sidebar-panel > header .user-information { width: auto; gap: 8px; }
+    .sidebar-panel #logout-button { margin-left: auto; display: inline-flex; }
+}
+
+/* Pantallas medias: separar más el logout del nombre */
+@media (min-width: 481px) and (max-width: 900px) {
+    .sidebar-panel > header { display: flex; align-items: center; }
+    .sidebar-panel > header .user-information { width: 100%; }
+    .sidebar-panel #logout-button { margin-left: auto; padding-left: 12px; }
+}
+
+/* Tablet / móvil ancho: avatar+nombre alineados a la derecha, logout debajo con borde destacado */
+@media (max-width: 900px) {
+    .sidebar-panel > header {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+    .sidebar-panel .user-information {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        width: 100%;
+        gap: 8px;
+        padding-right: 6px;
+    }
+
+    .sidebar-panel .user-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    /* Logout debajo, con borde destacado */
+    .sidebar-panel #logout-button {
+        margin: 0;
+        border: 2px solid #1e40af;
+        color: #1e40af;
+        background: rgba(255,255,255,0.95);
+        padding: 8px 12px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(16,24,40,0.04);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Asegurar que el icono y texto del logout se vean correctamente */
+    .sidebar-panel .logout-icon { color: #1e40af; }
+    .sidebar-panel .logout-text { display: inline-block; }
+}
+
+/* Mantener el título centrado en tablet/móvil aunque el header cambie a columna */
+@media (max-width: 900px) {
+    .sidebar-panel > header .app-title {
+        align-self: center;
+        text-align: center;
+        width: 100%;
+        margin: 0 0 8px 0;
     }
 }
