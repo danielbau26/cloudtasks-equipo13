@@ -224,6 +224,7 @@ button:hover {
     border-radius: 999px;
     font-weight: bold;
     cursor: pointer;
+    margin-top: 0;
 }
 
 .new-task-button .plus {
@@ -300,6 +301,7 @@ details summary {
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
+    margin-top: 0;
 }
 
 .menu-button:hover {
@@ -832,12 +834,60 @@ details summary {
         width: 100%;
     }
 
+    .controls {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .left-controls,
     .right-controls {
         width: 100%;
     }
 
+    .right-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+    }
+
     .menu-button {
-        flex: 1 1 160px;
+        width: 100%;
+        flex: 1 1 auto;
+        min-height: 44px;
+        text-align: center;
+        padding: 10px 8px;
+        font-size: 14px;
+    }
+
+    .profile-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .profile-button-mobile {
+        width: 100%;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        color: #2563eb;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 10px 8px;
+        font-weight: 700;
+    }
+
+    .new-task-button {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 14px;
+        font-size: 15px;
     }
 
     .task-card {
@@ -873,23 +923,23 @@ details summary {
 
     .controls {
         display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: stretch;
         gap: 8px;
-        flex-wrap: nowrap;
     }
 
     .left-controls,
     .right-controls {
-        width: auto;
-        flex: 1;
+        width: 100%;
+    }
+
+    .right-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .new-task-button {
-        width: auto;
+        width: 100%;
         min-width: 0;
-        flex: 1;
         justify-content: center;
         padding: 10px 12px;
         font-size: 14px;
