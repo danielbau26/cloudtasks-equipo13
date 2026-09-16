@@ -42,6 +42,8 @@ const registerPassword = document.getElementById("register-password");
 const authMessage = document.getElementById("auth-message");
 const logoutButton = document.getElementById("logout-button");
 const userUsername = document.getElementById("user-username");
+const profileButtonMobile = document.getElementById('profile-button-mobile');
+const userUsernameMobile = document.getElementById('user-username-mobile');
 
 // Supabase Auth requiere un correo, así que a cada nombre de usuario le
 // asignamos un correo interno ficticio que el usuario nunca ve.
@@ -381,7 +383,9 @@ export function updateAuthenticationView(session) {
         authSection.hidden = true;
         appContent.hidden = false;
 
-        userUsername.textContent = currentUser.user_metadata?.username ?? "";
+        const name = currentUser.user_metadata?.username ?? "";
+        userUsername.textContent = name;
+        if (userUsernameMobile) userUsernameMobile.textContent = name;
 
         showAuthMessage("");
 
@@ -391,6 +395,7 @@ export function updateAuthenticationView(session) {
         appContent.hidden = true;
 
         userUsername.textContent = "";
+        if (userUsernameMobile) userUsernameMobile.textContent = "";
 
         tasksCache = [];
         renderTasks([]);
@@ -517,4 +522,131 @@ supabaseClient.auth.onAuthStateChange(function (_event, session) {
 });
 
 // Iniciar el sistema de autenticación
+// Perfil: dropdown toggle
+const profileButton = document.getElementById('profile-button');
+const profileDropdown = document.getElementById('profile-dropdown');
+
+if (profileButton) {
+    profileButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const expanded = profileButton.getAttribute('aria-expanded') === 'true';
+        profileButton.setAttribute('aria-expanded', String(!expanded));
+        if (profileDropdown) profileDropdown.classList.toggle('hidden');
+    });
+}
+
+// Cerrar dropdown al hacer click fuera o presionar Escape
+document.addEventListener('click', function (e) {
+    if (!profileDropdown) return;
+    const clickedOutside = !profileDropdown.contains(e.target) && !(profileButton && profileButton.contains(e.target)) && !(profileButtonMobile && profileButtonMobile.contains(e.target));
+    if (clickedOutside) {
+        if (!profileDropdown.classList.contains('hidden')) {
+            profileDropdown.classList.add('hidden');
+            if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+            // restore if moved
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+        }
+    }
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && profileDropdown) {
+        profileDropdown.classList.add('hidden');
+        if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+    }
+});
+
+// Móvil: reutilizar el mismo dropdown de escritorio pero mostrarlo sobre el resto
+let _dropdownOriginalParent = null;
+let _dropdownNextSibling = null;
+if (profileButtonMobile) {
+    profileButtonMobile.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!profileDropdown) return;
+
+        const isHidden = profileDropdown.classList.contains('hidden');
+        if (isHidden) {
+            // almacenar posición original
+            if (!_dropdownOriginalParent) {
+                _dropdownOriginalParent = profileDropdown.parentElement;
+                _dropdownNextSibling = profileDropdown.nextSibling;
+            }
+
+            // mover al body para posicionarlo como overlay
+            document.body.appendChild(profileDropdown);
+            profileDropdown.style.position = 'absolute';
+            profileDropdown.style.zIndex = '9999';
+            profileDropdown.classList.remove('hidden');
+
+            // posicionar centrado respecto al botón móvil
+            const rect = profileButtonMobile.getBoundingClientRect();
+            const dropdownWidth = profileDropdown.offsetWidth || 200;
+            const left = Math.max(8, rect.left + rect.width / 2 - dropdownWidth / 2);
+            const top = rect.bottom + window.scrollY + 8;
+            profileDropdown.style.left = `${left}px`;
+            profileDropdown.style.top = `${top}px`;
+            profileDropdown.style.right = 'auto';
+        } else {
+            // ocultar y restaurar
+            profileDropdown.classList.add('hidden');
+            // restore
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+        }
+    });
+
+    // cerrar al click fuera: reutilizamos el handler general, pero aseguramos restauración
+    document.addEventListener('click', function (e) {
+        if (!profileDropdown) return;
+        if (!profileDropdown.contains(e.target) && !profileButton.contains(e.target) && !profileButtonMobile.contains(e.target)) {
+            if (!profileDropdown.classList.contains('hidden')) {
+                profileDropdown.classList.add('hidden');
+                if (_dropdownOriginalParent) {
+                    if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                    else _dropdownOriginalParent.appendChild(profileDropdown);
+                    profileDropdown.style.position = '';
+                    profileDropdown.style.left = '';
+                    profileDropdown.style.top = '';
+                    profileDropdown.style.right = '';
+                    profileDropdown.style.zIndex = '';
+                }
+                if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && profileDropdown && !profileDropdown.classList.contains('hidden')) {
+            profileDropdown.classList.add('hidden');
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+            if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+// profileSettings removed: 'Perfil / Ajustes' is no longer available
+
 document.addEventListener("DOMContentLoaded", initializeAuthentication);
