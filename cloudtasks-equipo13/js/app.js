@@ -1,3 +1,6 @@
+import { supabaseClient } from "./supabaseClient.js";
+import { formatDate, sortTasks, computeProgress, validateTaskForm } from "./taskUtils.js";
+
 // Referencias a los elementos del DOM
 const taskForm = document.getElementById("task-form");
 const toggleNewTask = document.getElementById("toggle-new-task");
@@ -25,11 +28,35 @@ const descriptionInput = document.getElementById("description");
 const priorityInput = document.getElementById("priority");
 const deadlineInput = document.getElementById("deadline");
 
+// Referencias del inicio de sesión
+const authSection = document.getElementById("auth-section");
+const appContent = document.getElementById("app-content");
+const showLoginTab = document.getElementById("show-login-tab");
+const showRegisterTab = document.getElementById("show-register-tab");
+const loginForm = document.getElementById("login-form");
+const loginUsername = document.getElementById("login-username");
+const loginPassword = document.getElementById("login-password");
+const registerForm = document.getElementById("register-form");
+const registerUsername = document.getElementById("register-username");
+const registerPassword = document.getElementById("register-password");
+const authMessage = document.getElementById("auth-message");
+const logoutButton = document.getElementById("logout-button");
+const userUsername = document.getElementById("user-username");
+const profileButtonMobile = document.getElementById('profile-button-mobile');
+const userUsernameMobile = document.getElementById('user-username-mobile');
+
+// Supabase Auth requiere un correo, así que a cada nombre de usuario le
+// asignamos un correo interno ficticio que el usuario nunca ve.
+const USERNAME_EMAIL_DOMAIN = "cloudtasks.local";
+const USERNAME_PATTERN = /^[a-zA-Z0-9_.-]{3,30}$/;
+
+function usernameToEmail(username) {
+    return `${username.toLowerCase()}@${USERNAME_EMAIL_DOMAIN}`;
+}
+
 let tasksCache = [];
 let currentSort = null; // 'priority' or 'deadline'
-
-// Cargar tareas al iniciar la aplicación
-document.addEventListener("DOMContentLoaded", fetchTasks);
+let currentUser = null;
 
 // Toggle formulario nueva tarea
 if (toggleNewTask) {
@@ -92,7 +119,7 @@ if (allBtn) allBtn.addEventListener('click', showAll);
 showPendingOnly();
 
 // Leer tareas desde Supabase
-async function fetchTasks() {
+export async function fetchTasks() {
     try {
         const { data, error } = await supabaseClient
             .from("tasks")
@@ -122,8 +149,9 @@ taskForm.addEventListener("submit", async function (event) {
     const priority = priorityInput.value;
     const deadline = deadlineInput.value;
 
-    if (!title || !description || !priority || !deadline) {
-        alert("Por favor, completa todos los campos.");
+    const validation = validateTaskForm({ title, description, priority, deadline });
+    if (!validation.valid) {
+        alert(validation.message);
         return;
     }
 
@@ -132,7 +160,8 @@ taskForm.addEventListener("submit", async function (event) {
         description: description,
         priority: priority,
         deadline: deadline,
-        completed: false
+        completed: false,
+        user_id: currentUser?.id
     };
 
     try {
@@ -155,21 +184,13 @@ taskForm.addEventListener("submit", async function (event) {
 function updateProgressSummary(tasks) {
     if (!allProgress || !progressPercent || !progressBarFill) return;
 
-    const total = (tasks || []).length;
-    const completed = (tasks || []).filter(task => task.completed).length;
-    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const { total, completed, percentage, level } = computeProgress(tasks);
 
     progressPercent.textContent = `${percentage}%`;
     progressBarFill.style.width = `${percentage}%`;
 
     allProgress.classList.remove('low', 'medium', 'high');
-    if (percentage < 50) {
-        allProgress.classList.add('low');
-    } else if (percentage < 80) {
-        allProgress.classList.add('medium');
-    } else {
-        allProgress.classList.add('high');
-    }
+    allProgress.classList.add(level);
 
     const totalText = total === 0 ? '0 tareas' : `${completed}/${total} completadas`;
     allProgress.setAttribute('title', `${totalText} · ${percentage}% completado`);
@@ -177,21 +198,10 @@ function updateProgressSummary(tasks) {
 }
 
 // Renderizar tareas en el DOM
-function renderTasks(tasks) {
-    // Separar pendientes y completadas
-    const pending = (tasks || []).filter(t => !t.completed);
-    const completed = (tasks || []).filter(t => t.completed);
-
-    // Aplicar ordenamiento si corresponde
-    const priorityRank = (p) => (p === 'alta' ? 3 : p === 'media' ? 2 : 1);
-
-    if (currentSort === 'priority') {
-        pending.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
-        completed.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
-    } else if (currentSort === 'deadline') {
-        pending.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-        completed.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-    }
+export function renderTasks(tasks) {
+    // Separar pendientes y completadas, y aplicar ordenamiento si corresponde
+    const pending = sortTasks((tasks || []).filter(t => !t.completed), currentSort);
+    const completed = sortTasks((tasks || []).filter(t => t.completed), currentSort);
 
     // Contenedores
     pendingList.innerHTML = "";
@@ -323,7 +333,7 @@ function getTrashIcon() {
 }
 
 // Actualizar estado de tarea en Supabase
-async function toggleTaskStatus(taskId, currentStatus) {
+export async function toggleTaskStatus(taskId, currentStatus) {
     try {
         const { error } = await supabaseClient
             .from("tasks")
@@ -340,7 +350,7 @@ async function toggleTaskStatus(taskId, currentStatus) {
 }
 
 // Eliminar tarea en Supabase
-async function deleteTask(taskId) {
+export async function deleteTask(taskId) {
     const confirmation = confirm("¿Estás seguro de que deseas eliminar esta tarea?");
     if (!confirmation) return;
 
@@ -359,10 +369,284 @@ async function deleteTask(taskId) {
     }
 }
 
-// Convertir fecha YYYY-MM-DD a DD/MM/YYYY
-function formatDate(dateString) {
-    if (!dateString) return "";
-    const dateParts = dateString.split("-");
-    if (dateParts.length < 3) return dateString;
-    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+// Mostrar mensajes en el formulario de acceso
+function showAuthMessage(message, type = "") {
+    authMessage.textContent = message;
+    authMessage.className = `auth-message ${type}`;
 }
+
+// Mostrar la aplicación o el inicio de sesión según haya sesión activa
+export function updateAuthenticationView(session) {
+    currentUser = session?.user ?? null;
+
+    if (currentUser) {
+        authSection.hidden = true;
+        appContent.hidden = false;
+
+        const name = currentUser.user_metadata?.username ?? "";
+        userUsername.textContent = name;
+        if (userUsernameMobile) userUsernameMobile.textContent = name;
+
+        showAuthMessage("");
+
+        fetchTasks();
+    } else {
+        authSection.hidden = false;
+        appContent.hidden = true;
+
+        userUsername.textContent = "";
+        if (userUsernameMobile) userUsernameMobile.textContent = "";
+
+        tasksCache = [];
+        renderTasks([]);
+
+        showLoginForm();
+    }
+}
+
+// Comprobar si el usuario ya tenía una sesión abierta
+async function initializeAuthentication() {
+    const { data, error } = await supabaseClient.auth.getSession();
+
+    if (error) {
+        console.error("Error al comprobar la sesión:", error.message);
+        showAuthMessage("No se pudo comprobar la sesión.", "error");
+        return;
+    }
+
+    updateAuthenticationView(data.session);
+}
+
+// Alternar entre el formulario de inicio de sesión y el de registro
+function showLoginForm() {
+    loginForm.classList.remove("hidden");
+    registerForm.classList.add("hidden");
+    showLoginTab.classList.add("active");
+    showRegisterTab.classList.remove("active");
+    showAuthMessage("");
+}
+
+function showRegisterForm() {
+    loginForm.classList.add("hidden");
+    registerForm.classList.remove("hidden");
+    showLoginTab.classList.remove("active");
+    showRegisterTab.classList.add("active");
+    showAuthMessage("");
+}
+
+showLoginTab.addEventListener("click", showLoginForm);
+showRegisterTab.addEventListener("click", showRegisterForm);
+
+// Iniciar sesión
+loginForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const username = loginUsername.value.trim();
+    const password = loginPassword.value;
+
+    if (!username || !password) {
+        showAuthMessage("Completa el usuario y la contraseña.", "error");
+        return;
+    }
+
+    showAuthMessage("Iniciando sesión...");
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email: usernameToEmail(username),
+        password
+    });
+
+    if (error) {
+        console.error("Error al iniciar sesión:", error.message);
+        showAuthMessage("Usuario o contraseña incorrectos.", "error");
+        return;
+    }
+
+    loginForm.reset();
+    showAuthMessage("");
+});
+
+// Crear una cuenta
+registerForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const username = registerUsername.value.trim();
+    const password = registerPassword.value;
+
+    if (!USERNAME_PATTERN.test(username)) {
+        showAuthMessage("El usuario debe tener 3-30 caracteres: letras, números, punto, guion o guion bajo.", "error");
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthMessage("La contraseña debe tener mínimo 6 caracteres.", "error");
+        return;
+    }
+
+    showAuthMessage("Creando cuenta...");
+
+    const { error } = await supabaseClient.auth.signUp({
+        email: usernameToEmail(username),
+        password,
+        options: { data: { username } }
+    });
+
+    if (error) {
+        console.error("Error al crear la cuenta:", error.message);
+        showAuthMessage(
+            error.message === "User already registered"
+                ? "Ese nombre de usuario ya está en uso."
+                : error.message,
+            "error"
+        );
+        return;
+    }
+
+    registerForm.reset();
+    showAuthMessage("Cuenta creada correctamente. Ya puedes iniciar sesión.", "success");
+});
+
+// Cerrar sesión
+logoutButton.addEventListener("click", async function () {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+        console.error("Error al cerrar sesión:", error.message);
+        alert("No se pudo cerrar la sesión.");
+    }
+});
+
+// Detectar inicio o cierre de sesión
+supabaseClient.auth.onAuthStateChange(function (_event, session) {
+    updateAuthenticationView(session);
+});
+
+// Iniciar el sistema de autenticación
+// Perfil: dropdown toggle
+const profileButton = document.getElementById('profile-button');
+const profileDropdown = document.getElementById('profile-dropdown');
+
+if (profileButton) {
+    profileButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const expanded = profileButton.getAttribute('aria-expanded') === 'true';
+        profileButton.setAttribute('aria-expanded', String(!expanded));
+        if (profileDropdown) profileDropdown.classList.toggle('hidden');
+    });
+}
+
+// Cerrar dropdown al hacer click fuera o presionar Escape
+document.addEventListener('click', function (e) {
+    if (!profileDropdown) return;
+    const clickedOutside = !profileDropdown.contains(e.target) && !(profileButton && profileButton.contains(e.target)) && !(profileButtonMobile && profileButtonMobile.contains(e.target));
+    if (clickedOutside) {
+        if (!profileDropdown.classList.contains('hidden')) {
+            profileDropdown.classList.add('hidden');
+            if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+            // restore if moved
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+        }
+    }
+});
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && profileDropdown) {
+        profileDropdown.classList.add('hidden');
+        if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+    }
+});
+
+// Móvil: reutilizar el mismo dropdown de escritorio pero mostrarlo sobre el resto
+let _dropdownOriginalParent = null;
+let _dropdownNextSibling = null;
+if (profileButtonMobile) {
+    profileButtonMobile.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!profileDropdown) return;
+
+        const isHidden = profileDropdown.classList.contains('hidden');
+        if (isHidden) {
+            // almacenar posición original
+            if (!_dropdownOriginalParent) {
+                _dropdownOriginalParent = profileDropdown.parentElement;
+                _dropdownNextSibling = profileDropdown.nextSibling;
+            }
+
+            // mover al body para posicionarlo como overlay
+            document.body.appendChild(profileDropdown);
+            profileDropdown.style.position = 'absolute';
+            profileDropdown.style.zIndex = '9999';
+            profileDropdown.classList.remove('hidden');
+
+            // posicionar centrado respecto al botón móvil
+            const rect = profileButtonMobile.getBoundingClientRect();
+            const dropdownWidth = profileDropdown.offsetWidth || 200;
+            const left = Math.max(8, rect.left + rect.width / 2 - dropdownWidth / 2);
+            const top = rect.bottom + window.scrollY + 8;
+            profileDropdown.style.left = `${left}px`;
+            profileDropdown.style.top = `${top}px`;
+            profileDropdown.style.right = 'auto';
+        } else {
+            // ocultar y restaurar
+            profileDropdown.classList.add('hidden');
+            // restore
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+        }
+    });
+
+    // cerrar al click fuera: reutilizamos el handler general, pero aseguramos restauración
+    document.addEventListener('click', function (e) {
+        if (!profileDropdown) return;
+        if (!profileDropdown.contains(e.target) && !profileButton.contains(e.target) && !profileButtonMobile.contains(e.target)) {
+            if (!profileDropdown.classList.contains('hidden')) {
+                profileDropdown.classList.add('hidden');
+                if (_dropdownOriginalParent) {
+                    if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                    else _dropdownOriginalParent.appendChild(profileDropdown);
+                    profileDropdown.style.position = '';
+                    profileDropdown.style.left = '';
+                    profileDropdown.style.top = '';
+                    profileDropdown.style.right = '';
+                    profileDropdown.style.zIndex = '';
+                }
+                if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && profileDropdown && !profileDropdown.classList.contains('hidden')) {
+            profileDropdown.classList.add('hidden');
+            if (_dropdownOriginalParent) {
+                if (_dropdownNextSibling) _dropdownOriginalParent.insertBefore(profileDropdown, _dropdownNextSibling);
+                else _dropdownOriginalParent.appendChild(profileDropdown);
+                profileDropdown.style.position = '';
+                profileDropdown.style.left = '';
+                profileDropdown.style.top = '';
+                profileDropdown.style.right = '';
+                profileDropdown.style.zIndex = '';
+            }
+            if (profileButton) profileButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+// profileSettings removed: 'Perfil / Ajustes' is no longer available
+
+document.addEventListener("DOMContentLoaded", initializeAuthentication);

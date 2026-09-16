@@ -1,0 +1,21 @@
+{
+  "name": "cloudtasks-equipo13",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "CloudTasks - registro y gestión de tareas (Seminario de Ingeniería de Software, ICESI).",
+  "scripts": {
+    "test": "vitest run --config testing/vitest.config.js",
+    "test:watch": "vitest --config testing/vitest.config.js",
+    "test:coverage": "vitest run --config testing/vitest.config.js --coverage",
+    "lint": "eslint js testing/tests testing/vitest.config.js eslint.config.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@vitest/coverage-v8": "^2.1.5",
+    "eslint": "^9.15.0",
+    "globals": "^15.12.0",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.5"
+  }
+}
